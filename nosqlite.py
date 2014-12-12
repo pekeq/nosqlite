@@ -1252,6 +1252,8 @@ class Collection(object):
 
             >>>         
         """
+        if fields is not None:
+            fields = list(set(fields) & set(self._columns()))
         cmd = self._find_cmd(query=query, fields=fields, batch_size=batch_size,
                              _rowid=_rowid, order_by=order_by,
                              limit=limit, offset=offset, **kwds)
