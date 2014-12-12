@@ -763,7 +763,6 @@ class Collection(object):
             ['a', 'b', 'c']
         """
         self._validate_column_names(columns)
-        s = 'CREATE TABLE IF NOT EXISTS "%s" (%s)'%(self.name, ', '.join('"%s"'%s for s in columns))
         self.database('CREATE TABLE IF NOT EXISTS "%s" (%s)'%(self.name, ', '.join('"%s"'%s for s in columns)))
         
     ###############################################################
