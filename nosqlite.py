@@ -893,7 +893,7 @@ class Collection(object):
         self.database(cmd)
         self.name = new_name
     
-    def copy(self, collection, query='', fields=None, **kwds):
+    def copy(self, collection, query='', t=None, fields=None, **kwds):
         """
         Copy documents from self into the given collection.  The query
         and fields are specified exactly as for the find command.
@@ -925,14 +925,15 @@ class Collection(object):
             collection._add_columns(cols)
         # now recipient table has all needed columns, so do the insert in one go.
         c = ','.join(['"%s"'%x for x in fields])
+        where, t = self._where_clause(query, t, kwds)
         cmd = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s" %s'%(
-            collection.name, c, c, self.name, self._where_clause(query, kwds))
-        self.database(cmd)
+            collection.name, c, c, self.name, where)
+        self.database(cmd, t)
 
     ###############################################################
     # Updating documents
     ###############################################################
-    def update(self, d, query='', **kwds):
+    def update(self, d, query='', t=None, **kwds):
         """
         Set the values specified by the dictionary d for every
         document that satisfy the given query string (or equality
@@ -946,14 +947,18 @@ class Collection(object):
             >>> list(C)
             [{'y': 20, 'x': 15, 'z z': 'hello'}, {'b.c': 10, 'x': 15, 'z z': 'hello', 'y': 20, 'a!b': 5}]
         """
+        tt = t
         new_cols = set(d.keys()).difference(self._columns())
         if new_cols:
             self._add_columns(new_cols)
 
         t = tuple([self.database.client._coerce_(x) for x in d.values()])
         s = ','.join(['"%s"=? '%x for x in d.keys()])
+        where, tt = self._where_clause(query, tt, kwds)
         cmd = 'UPDATE "%s" SET %s %s'%(
-            self.name, s, self._where_clause(query, kwds))
+            self.name, s, where)
+        if tt is not None:
+            t += tuple(tt)
         self.database(cmd, t)
         
     ###############################################################
@@ -1028,7 +1033,7 @@ class Collection(object):
     ###############################################################
     # Deleting documents
     ###############################################################
-    def delete(self, query='', **kwds):
+    def delete(self, query='', t=None, **kwds):
         """
         EXAMPLES::
 
@@ -1041,8 +1046,9 @@ class Collection(object):
             # just drop the table
             cmd = 'DROP TABLE "%s"'%self.name
         else:
-            cmd = 'DELETE FROM "%s" %s'%(self.name, self._where_clause(query, kwds))
-        self.database(cmd)
+            where, t = self._where_clause(query, t, kwds)
+            cmd = 'DELETE FROM "%s" %s'%(self.name, where)
+        self.database(cmd, t)
 
     ###############################################################
     # Indexes: creation, dropping, listing
@@ -1173,21 +1179,25 @@ class Collection(object):
             raise ValueError, "found nothing"
         return v[0]
         
-    def _where_clause(self, query, kwds):
+    def _where_clause(self, query, t, kwds):
         """
         EXAMPLES::
 
             >>> 
         """
         if len(kwds) > 0:
+            if t is None:
+                t = []
             for key, val in kwds.iteritems():
                 val = self.database.client._coerce_(val)
                 
                 if query:
-                    query += ' AND "%s"=%r '%(key, val)
+                    query += ' AND "%s"=? '%(key)
                 else:
-                    query = ' "%s"=%r '%(key, val)
-        return ' WHERE ' + query if query else ''
+                    query = ' "%s"=? '%(key)
+                t.append(val)
+        where = ' WHERE ' + query if query else ''
+        return where, t
 
     def _find_cmd(self, query='', t=None, fields=None, limit=None, offset=0,
                   order_by=None, batch_size=50, _rowid=False, _count=False, **kwds):
@@ -1205,7 +1215,8 @@ class Collection(object):
                 fields = [fields]
             cmd += '"%s" FROM "%s"'%('","'.join(fields), self.name)
 
-        cmd += self._where_clause(query, kwds)
+        where, t = self._where_clause(query, t, kwds)
+        cmd += where
 
         if order_by is not None:
             cmd += ' ORDER BY %s '%order_by
@@ -1219,7 +1230,7 @@ class Collection(object):
         if offset is not None:
             cmd += ' OFFSET %s'%int(offset)
 
-        return cmd
+        return cmd, t
 
     def count(self, *args, **kwds):
         """
@@ -1230,8 +1241,8 @@ class Collection(object):
             >>>                 
         """
         kwds['_count'] = True
-        cmd = self._find_cmd(*args, **kwds)
-        return self.database(cmd)[0]
+        cmd, t = self._find_cmd(*args, **kwds)
+        return self.database(cmd, t)[0]
 
     def __iter__(self):
         """
@@ -1253,7 +1264,7 @@ class Collection(object):
         """
         if fields is not None:
             fields = list(set(fields) & set(self._columns()))
-        cmd = self._find_cmd(query=query, t=t, fields=fields, batch_size=batch_size,
+        cmd, t = self._find_cmd(query=query, t=t, fields=fields, batch_size=batch_size,
                              _rowid=_rowid, order_by=order_by,
                              limit=limit, offset=offset, **kwds)
         convert = self.database.client._coerce_back_
