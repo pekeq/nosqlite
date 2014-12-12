@@ -7,18 +7,18 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.client = nosqlite.Client('.')
         self.database = self.client.memory
-        self.collection = self.database.index
 
     def test_unicode_string(self):
+        collection = self.database.index
         dummy = nosqlite.client(u'.')
 
-        self.collection.insert({'data':u'111'})
-        self.collection.insert({u'xxx':u'table'})
-        self.collection.copy(u'collection2')
+        collection.insert({'data':u'111'})
+        collection.insert({u'xxx':u'table'})
+        collection.copy(u'collection2')
 
-        self.collection.insert({'a': u'あいうえお'})
+        collection.insert({'a': u'あいうえお'})
 
-        r = self.collection.find_one(fields=[u'data'])
+        r = collection.find_one(fields=[u'data'])
         self.assertDictEqual({'data':'111'}, r)
 
     def test_keyword_escape(self):
