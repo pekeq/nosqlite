@@ -242,7 +242,7 @@ class Server(object):
         def execute(cmds, t, file='default', many=False):
             db = self.db(os.path.join(self.directory, file) if file != ':memory:' else file)
             cursor = db.cursor()
-            if isinstance(cmds, str):
+            if isinstance(cmds, basestring):
                 if t is not None:
                     cmds = [(cmds, t)]
                 else:
@@ -344,7 +344,7 @@ class LocalServer(object):
     def execute(self, cmds, t, file='default', many=False):
         db = self.db(os.path.join(self.directory, file) if file != ':memory:' else file)
         cursor = db.cursor()
-        if isinstance(cmds, str):
+        if isinstance(cmds, basestring):
             if t is not None:
                 cmds = [(cmds, t)]
             else:
@@ -402,7 +402,7 @@ class Client(object):
         if 'http://' in str(port_or_dir) or 'http://' in username or 'http://' in password or 'http://' in address:
             raise ValueError, 'input contains "http://": please read the documentation'
         
-        if isinstance(port_or_dir, str):
+        if isinstance(port_or_dir, basestring):
             # instead open local databases directory (no client/server).
             self.server = LocalServer(port_or_dir)
         else:
@@ -469,7 +469,7 @@ class Client(object):
             ...
             RuntimeError: ...
         """
-        if not isinstance(cmd, str):
+        if not isinstance(cmd, basestring):
             raise TypeError("cmd (=%s) must be a string"%cmd)
         if coerce:
             if many:
@@ -530,7 +530,7 @@ class Client(object):
         """
         if isinstance(x, bool):
             x = int(x)
-        elif isinstance(x, (str, int, long, float)):
+        elif isinstance(x, (basestring, int, long, float)):
             pass
         elif x is None:
             pass
@@ -538,8 +538,6 @@ class Client(object):
             x = int(x)
         elif is_RealNumber(x) and x.prec()==53:
             return float(x)
-        elif isinstance(x, unicode):
-            return str(x)
         else:
             x = '__pickle' + base64.b64encode(zlib.compress(cPickle.dumps(x, 2)))
         return x
@@ -553,7 +551,7 @@ class Client(object):
             >>> c._coerce_back_(z)
             [1, 2]
         """
-        if isinstance(x, (str, unicode)) and x.startswith('__pickle'):
+        if isinstance(x, basestring) and x.startswith('__pickle'):
             return cPickle.loads(zlib.decompress(base64.b64decode(x[8:])))
         return x
 
@@ -911,7 +909,7 @@ class Collection(object):
             >>> list(db.foo)
             [{'y': 30, 'x': 20}, {'a': 5, 'x': 15, 'b': 10}]
         """
-        if isinstance(collection, str):
+        if isinstance(collection, basestring):
             collection = self.database.__getattr__(collection)
         # which columns we want to copy
         fields = self._columns() if fields is None else fields
@@ -976,7 +974,7 @@ class Collection(object):
 
             >>> 
         """
-        if isinstance(csvfile, str):
+        if isinstance(csvfile, basestring):
             csvfile = open(csvfile, 'wb')
         import csv
         W = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
@@ -1005,7 +1003,7 @@ class Collection(object):
 
             >>>         
         """
-        if isinstance(csvfile, str):
+        if isinstance(csvfile, basestring):
             csvfile = open(csvfile, 'rb')
         import csv
         R = csv.reader(csvfile, delimiter=delimiter, quotechar=quotechar)
@@ -1203,7 +1201,7 @@ class Collection(object):
             cmd += 'COUNT(*) ' if _count else ' * '
             cmd += ' FROM "%s"'%self.name
         else:
-            if isinstance(fields, str):
+            if isinstance(fields, basestring):
                 fields = [fields]
             cmd += '%s FROM "%s"'%(','.join(fields), self.name)
 
