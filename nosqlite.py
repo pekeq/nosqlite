@@ -763,6 +763,7 @@ class Collection(object):
             ['a', 'b', 'c']
         """
         self._validate_column_names(columns)
+        s = 'CREATE TABLE IF NOT EXISTS "%s" (%s)'%(self.name, ', '.join('"%s"'%s for s in columns))
         self.database('CREATE TABLE IF NOT EXISTS "%s" (%s)'%(self.name, ', '.join('"%s"'%s for s in columns)))
         
     ###############################################################
@@ -889,7 +890,7 @@ class Collection(object):
             >>> list(db.C)
             []
         """
-        cmd = "ALTER TABLE %s RENAME TO %s"%(self.name, new_name)
+        cmd = 'ALTER TABLE "%s" RENAME TO "%s"'%(self.name, new_name)
         self.database(cmd)
         self.name = new_name
     
@@ -1184,9 +1185,9 @@ class Collection(object):
                 val = self.database.client._coerce_(val)
                 
                 if query:
-                    query += ' AND %s=%r '%(key, val)
+                    query += ' AND "%s"=%r '%(key, val)
                 else:
-                    query = ' %s=%r '%(key, val)
+                    query = ' "%s"=%r '%(key, val)
         return ' WHERE ' + query if query else ''
 
     def _find_cmd(self, query='', fields=None, limit=None, offset=0,
@@ -1203,7 +1204,7 @@ class Collection(object):
         else:
             if isinstance(fields, basestring):
                 fields = [fields]
-            cmd += '%s FROM "%s"'%(','.join(fields), self.name)
+            cmd += '"%s" FROM "%s"'%('","'.join(fields), self.name)
 
         cmd += self._where_clause(query, kwds)
 
