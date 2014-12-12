@@ -1190,7 +1190,7 @@ class Collection(object):
                     query = ' "%s"=%r '%(key, val)
         return ' WHERE ' + query if query else ''
 
-    def _find_cmd(self, query='', fields=None, limit=None, offset=0,
+    def _find_cmd(self, query='', t=None, fields=None, limit=None, offset=0,
                   order_by=None, batch_size=50, _rowid=False, _count=False, **kwds):
         """
         EXAMPLES::
@@ -1242,7 +1242,7 @@ class Collection(object):
         """        
         return self.find()
 
-    def find(self, query='', fields=None, batch_size=50,
+    def find(self, query='', t=None, fields=None, batch_size=50,
              order_by=None, _rowid=False, limit=None, offset=0, **kwds):
         """
         Return iterator over all documents that match the given query.
@@ -1254,7 +1254,7 @@ class Collection(object):
         """
         if fields is not None:
             fields = list(set(fields) & set(self._columns()))
-        cmd = self._find_cmd(query=query, fields=fields, batch_size=batch_size,
+        cmd = self._find_cmd(query=query, t=t, fields=fields, batch_size=batch_size,
                              _rowid=_rowid, order_by=order_by,
                              limit=limit, offset=offset, **kwds)
         convert = self.database.client._coerce_back_
@@ -1262,7 +1262,7 @@ class Collection(object):
             cols = self._columns()
             if len(cols) == 0:  # table not yet created
                 return
-            v = self.database(cmd)
+            v = self.database(cmd, t)
             if fields is None:
                 columns = cols
             else:
