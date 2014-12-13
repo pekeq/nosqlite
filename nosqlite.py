@@ -1187,11 +1187,17 @@ class Collection(object):
                 t = []
             for key, val in kwds.iteritems():
                 val = self.database.client._coerce_(val)
+
+                expr = '='
+                m = re.search(r'^([\w]+)\s?(!?=|[<>]=?|<>)\s?$', key)
+                if m:
+                    key = m.group(1)
+                    expr = m.group(2)
                 
                 if query:
-                    query += ' AND "%s"=? '%(key)
+                    query += ' AND "%s"%s? '%(key, expr)
                 else:
-                    query = ' "%s"=? '%(key)
+                    query = ' "%s"%s? '%(key, expr)
                 t.append(val)
         return query, t
 

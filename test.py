@@ -94,5 +94,14 @@ class Test(unittest.TestCase):
 
         self.assertEqual([], list(collection.find({'foo': 50}, bar=50)))
 
+        self.assertEqual(50, len(list(collection.find({'foo <=':50}))))
+        self.assertEqual(49, len(list(collection.find({'foo < ':50}))))
+        self.assertEqual(50, len(list(collection.find({'foo >=':50}))))
+        self.assertEqual(49, len(list(collection.find({'foo > ':50}))))
+        self.assertEqual( 1, len(list(collection.find({'foo = ':50}))))
+        self.assertEqual(98, len(list(collection.find({'foo <>':50}))))
+        self.assertEqual(98, len(list(collection.find({'foo !=':50}))))
+        self.assertEqual( 1, len(list(collection.find({'foo <=':50, 'foo >=':50}))))
+
 if __name__ == '__main__':
     unittest.main()
