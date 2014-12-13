@@ -362,9 +362,6 @@ class LocalServer(object):
         db.commit()
         return v
 
-# see http://www.devpicayune.com/entry/200609191448
-socket.setdefaulttimeout(10)  
-
 class Client(object):
     """
     The noSQLite client object.  Create an instance of this object to
@@ -478,7 +475,12 @@ class Client(object):
                 if t is not None:
                     t = tuple([self._coerce_(x) for x in t])
         try:
-            return self.server.execute(cmd, t, file, many)
+            # see http://www.devpicayune.com/entry/200609191448
+            timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(10)
+            r = self.server.execute(cmd, t, file, many)
+            socket.setdefaulttimeout(timeout)
+            return r
         except xmlrpclib.Fault, e:
             raise RuntimeError, str(e) + ', cmd="%s"'%cmd
             
