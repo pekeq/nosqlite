@@ -82,6 +82,17 @@ class Test(unittest.TestCase):
         collection.delete(data="'\"")
         collection.delete('data=?', t=["'\""])
 
+    def test_query_as_dict(self):
+        collection = self.database.collection
+        collection.insert([{'foo':i, 'bar':i+1} for i in range(1, 100)])
+
+        self.assertEqual([{'foo':50, 'bar':51}], list(collection.find({'foo':50})))
+        self.assertEqual({'foo':50, 'bar':51}, collection.find_one({'foo': 50}))
+
+        self.assertEqual({'foo':50, 'bar':51}, collection.find_one('foo=?', t=[50], bar=51))
+        self.assertEqual({'foo':50, 'bar':51}, collection.find_one({'foo': 50}, bar=51))
+
+        self.assertEqual([], list(collection.find({'foo': 50}, bar=50)))
 
 if __name__ == '__main__':
     unittest.main()

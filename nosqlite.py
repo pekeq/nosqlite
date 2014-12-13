@@ -1180,13 +1180,8 @@ class Collection(object):
         if len(v) == 0:
             raise ValueError, "found nothing"
         return v[0]
-        
-    def _where_clause(self, query, t, kwds):
-        """
-        EXAMPLES::
 
-            >>> 
-        """
+    def _where_expression(self, query, t, kwds):
         if len(kwds) > 0:
             if t is None:
                 t = []
@@ -1198,6 +1193,17 @@ class Collection(object):
                 else:
                     query = ' "%s"=? '%(key)
                 t.append(val)
+        return query, t
+
+    def _where_clause(self, query, t, kwds):
+        """
+        EXAMPLES::
+
+            >>> 
+        """
+        if isinstance(query, dict):
+            query, t = self._where_expression(None, None, query)
+        query, t = self._where_expression(query, t, kwds)
         where = ' WHERE ' + query if query else ''
         return where, t
 
